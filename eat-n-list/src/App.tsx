@@ -81,7 +81,10 @@ export default function App() {
         </Button>
       </div>
       {selectedFriend.id !== "-1" && (
-        <FormSplitBill selectedFriend={selectedFriend} />
+        <FormSplitBill
+          selectedFriend={selectedFriend}
+          key={selectedFriend.id}
+        />
       )}
     </div>
   );
