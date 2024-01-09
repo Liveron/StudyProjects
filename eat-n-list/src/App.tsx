@@ -1,4 +1,5 @@
 import { FormEvent, ReactNode, useState } from "react";
+import { setSyntheticTrailingComments } from "typescript";
 
 const initialFriends: FriendModel[] = [
   {
