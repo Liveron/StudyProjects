@@ -1,15 +1,16 @@
 import { MovieModel } from "../App";
-import Movie from "./MovieProps";
+import Movie from "./Movie";
 
 type MovieListProps = {
   movies: MovieModel[];
+  onSelectMovie: (id: string) => void;
 };
 
-export default function MovieList({ movies }: MovieListProps) {
+export default function MovieList({ movies, onSelectMovie }: MovieListProps) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie movie={movie} key={movie.imdbID} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );
