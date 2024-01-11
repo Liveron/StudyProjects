@@ -1,5 +1,5 @@
 import { ChangeEvent, useReducer } from "react";
-import ActionBase from "./actions/ActionBase";
+import ActionBase from "../actions/ActionBase";
 
 enum CounterActionTypes {
   Inc,

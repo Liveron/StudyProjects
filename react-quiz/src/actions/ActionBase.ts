@@ -1,4 +1,4 @@
-export default abstract class ActionBase<T, P> {
+export default abstract class ActionBase<T = void, P = void> {
   protected readonly _type: T;
   protected readonly _payload: P;
 
