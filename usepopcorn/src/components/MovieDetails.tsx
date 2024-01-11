@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { KEY } from "../App";
+import { KEY, WatchedMovieModel } from "../App";
 import StarRating from "./StarRating";
 import Loader from "./Loader";
+import { title } from "process";
 
 class DetailsModel {
   Title: string = "";
@@ -17,18 +18,39 @@ class DetailsModel {
 }
 
 interface IMovieDetailsProps {
+  watched: WatchedMovieModel[];
   selectedId: string;
   onCloseMovie: () => void;
+  onAddWatched: (movie: WatchedMovieModel) => void;
 }
 
 export default function MovieDetails({
   selectedId,
   onCloseMovie,
+  onAddWatched,
+  watched,
 }: IMovieDetailsProps) {
+  const defaultRating =
+    watched.find((movie) => movie.imdbID === selectedId)?.userRating || 0;
+
   const [movie, setMovie] = useState(new DetailsModel());
   const [isLoading, setIsLoading] = useState(false);
+  const [userRating, setUserRating] = useState(defaultRating);
 
-  console.log(movie.Title, movie.Year);
+  const isWatched = watched.map((movie) => movie.imdbID).includes(selectedId);
+
+  function handleAdd() {
+    const newWatchedMovie: WatchedMovieModel = {
+      ...movie,
+      imdbID: selectedId,
+      runtime: Number(movie.Runtime.split(" ").at(0)),
+      imdbRating: Number(movie.imdbRating),
+      userRating,
+    };
+
+    onAddWatched(newWatchedMovie);
+    onCloseMovie();
+  }
 
   async function getMovieDetails() {
     setIsLoading(true);
@@ -43,6 +65,25 @@ export default function MovieDetails({
   useEffect(() => {
     getMovieDetails();
   }, [selectedId]);
+
+  useEffect(() => {
+    document.title = `Movie | ${movie.Title}`;
+
+    return function () {
+      document.title = "usePopcorn";
+    };
+  }, [movie.Title]);
+
+  useEffect(() => {
+    const callback = (e: KeyboardEvent) => {
+      if (e.code === "Escape") onCloseMovie();
+    };
+    document.addEventListener("keydown", callback);
+
+    return function () {
+      document.removeEventListener("keydown", callback);
+    };
+  }, [onCloseMovie]);
 
   return (
     <div className="details">
@@ -70,7 +111,17 @@ export default function MovieDetails({
 
           <section>
             <div className="rating">
-              <StarRating maxRating={10} size={24} />
+              <StarRating
+                maxRating={10}
+                size={24}
+                onSetRating={setUserRating}
+                defaultRating={userRating}
+              />
+              {userRating > 0 && !isWatched && (
+                <button className="btn-add" onClick={handleAdd}>
+                  + Add to list
+                </button>
+              )}
             </div>
             <p>
               <em>{movie.Plot}</em>
