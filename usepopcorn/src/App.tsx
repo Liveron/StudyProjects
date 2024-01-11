@@ -10,6 +10,8 @@ import WatchedMoviesList from "./components/WatchedMoviesList";
 import Loader from "./components/Loader";
 import ErrorMessage from "./components/ErrorMessage";
 import MovieDetails from "./components/MovieDetails";
+import { useMovies } from "./hooks/useMovies";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
 
 export class MovieModel {
   imdbID: string = "";
@@ -35,11 +37,12 @@ export const KEY = "8549e926";
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState<MovieModel[]>([]);
-  const [watched, setWatched] = useState<WatchedMovieModel[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [movies, isLoading, error] = useMovies(query, handleCloseMovie);
+  const [watched, setWatched] = useLocalStorageState<WatchedMovieModel[]>(
+    [],
+    "watched"
+  );
 
   function handleSelectMovie(id: string) {
     setSelectedId((selectedId) => (id === selectedId ? "" : id));
@@ -51,53 +54,13 @@ export default function App() {
 
   function handleAddWatched(movie: WatchedMovieModel) {
     setWatched((watched) => [...watched, movie]);
+
+    // localStorage.setItem("watched", JSON.stringify([...watched, movie]));
   }
 
   function handleDeleteWatched(id: string) {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
-
-  async function fetchMovies(controller?: AbortController) {
-    try {
-      setIsLoading(true);
-      setError("");
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-        { signal: controller?.signal }
-      );
-      if (!res.ok) throw new Error("Something went wrong with fetching movies");
-
-      const data = await res.json();
-      if (data.Response === "False") throw new Error("Movie not found");
-
-      setMovies(data.Search);
-      setError("");
-    } catch (err) {
-      if (err instanceof Error) {
-        console.log(err.message);
-
-        if (err.name !== "AbortError") setError(err.message);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-
-    if (!query.length) {
-      setMovies([]);
-      setError("");
-      return;
-    }
-  }
-
-  useEffect(() => {
-    const controller = new AbortController();
-    handleCloseMovie();
-    fetchMovies(controller);
-
-    return function () {
-      controller.abort();
-    };
-  }, [query]);
 
   return (
     <>
@@ -129,7 +92,7 @@ export default function App() {
               <WatchedMoviesList
                 watched={watched}
                 onDeleteWatched={handleDeleteWatched}
-              />{" "}
+              />
             </>
           )}
         </Box>

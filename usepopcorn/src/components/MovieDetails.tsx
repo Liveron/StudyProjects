@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { KEY, WatchedMovieModel } from "../App";
 import StarRating from "./StarRating";
 import Loader from "./Loader";
-import { title } from "process";
+import { useKey } from "../hooks/useKey";
 
 class DetailsModel {
   Title: string = "";
@@ -37,6 +37,8 @@ export default function MovieDetails({
   const [isLoading, setIsLoading] = useState(false);
   const [userRating, setUserRating] = useState(defaultRating);
 
+  const countRef = useRef(0);
+
   const isWatched = watched.map((movie) => movie.imdbID).includes(selectedId);
 
   function handleAdd() {
@@ -52,17 +54,21 @@ export default function MovieDetails({
     onCloseMovie();
   }
 
-  async function getMovieDetails() {
-    setIsLoading(true);
-    const res = await fetch(
-      `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-    );
-    const data = await res.json();
-    setMovie(data);
-    setIsLoading(false);
-  }
+  useEffect(() => {
+    if (userRating) countRef.current++;
+  }, [userRating]);
 
   useEffect(() => {
+    const getMovieDetails = async () => {
+      setIsLoading(true);
+      const res = await fetch(
+        `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+      );
+      const data = await res.json();
+      setMovie(data);
+      setIsLoading(false);
+    };
+
     getMovieDetails();
   }, [selectedId]);
 
@@ -74,16 +80,18 @@ export default function MovieDetails({
     };
   }, [movie.Title]);
 
-  useEffect(() => {
-    const callback = (e: KeyboardEvent) => {
-      if (e.code === "Escape") onCloseMovie();
-    };
-    document.addEventListener("keydown", callback);
+  useKey("Escape", onCloseMovie);
 
-    return function () {
-      document.removeEventListener("keydown", callback);
-    };
-  }, [onCloseMovie]);
+  // useEffect(() => {
+  //   const callback = (e: KeyboardEvent) => {
+  //     if (e.code === "Escape") onCloseMovie();
+  //   };
+  //   document.addEventListener("keydown", callback);
+
+  //   return function () {
+  //     document.removeEventListener("keydown", callback);
+  //   };
+  // }, [onCloseMovie]);
 
   return (
     <div className="details">
