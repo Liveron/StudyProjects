@@ -10,6 +10,8 @@ import Question from "./components/Question";
 import NextButton from "./components/NextButton";
 import Progress from "./components/Progress";
 import FinishScreen from "./components/FinishScreen";
+import Footer from "./components/Footer";
+import Timer from "./components/Timer";
 
 enum AppActionType {
   DataReceived,
@@ -18,6 +20,8 @@ enum AppActionType {
   NewAnswer,
   NextQuestion,
   Finish,
+  Restart,
+  Tick,
 }
 
 class AppAction extends ActionBase<AppActionType, any> {
@@ -40,6 +44,17 @@ type AppState = {
   answer: number;
   points: number;
   highscore: number;
+  secondsRemaining: number;
+};
+
+const initialState: AppState = {
+  questions: [],
+  status: "loading",
+  index: 0,
+  answer: -1,
+  points: 0,
+  highscore: 0,
+  secondsRemaining: 420,
 };
 
 function reducer(
@@ -73,23 +88,24 @@ function reducer(
         highscore:
           state.points > state.highscore ? state.points : state.highscore,
       };
+    case AppActionType.Restart:
+      return { ...initialState, questions: state.questions, status: "ready" };
+    case AppActionType.Tick:
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
+      };
     default:
       throw new Error("Action unknown");
   }
 }
 
-const initialState: AppState = {
-  questions: [],
-  status: "loading",
-  index: 0,
-  answer: -1,
-  points: 0,
-  highscore: 0,
-};
-
 export default function App() {
-  const [{ questions, status, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { questions, status, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
 
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce(
@@ -133,15 +149,21 @@ export default function App() {
               }
               answer={answer}
             />
-            <NextButton
-              onClick={() =>
-                dispatch(new AppAction(AppActionType.NextQuestion))
-              }
-              answer={answer}
-              index={index}
-              numQuestions={numQuestions}
-              onEndClick={() => dispatch(new AppAction(AppActionType.Finish))}
-            />
+            <Footer>
+              <Timer
+                onTick={() => dispatch(new AppAction(AppActionType.Tick))}
+                secondsRemaining={secondsRemaining}
+              />
+              <NextButton
+                onClick={() =>
+                  dispatch(new AppAction(AppActionType.NextQuestion))
+                }
+                answer={answer}
+                index={index}
+                numQuestions={numQuestions}
+                onEndClick={() => dispatch(new AppAction(AppActionType.Finish))}
+              />
+            </Footer>
           </>
         )}
         {status === "finished" && (
@@ -149,6 +171,7 @@ export default function App() {
             points={points}
             maxPossiblePoints={maxPossiblePoints}
             highscore={highscore}
+            onClick={() => dispatch(new AppAction(AppActionType.Restart))}
           />
         )}
       </Main>

@@ -2,12 +2,14 @@ interface IFinishScreenProps {
   points: number;
   maxPossiblePoints: number;
   highscore: number;
+  onClick: () => void;
 }
 
 export default function FinishScreen({
   points,
   maxPossiblePoints,
   highscore,
+  onClick,
 }: IFinishScreenProps) {
   const percentage = (points / maxPossiblePoints) * 100;
 
@@ -26,6 +28,9 @@ export default function FinishScreen({
         {Math.ceil(percentage)}%)
       </p>
       <p className="highscore">(Highscore: {highscore} points)</p>
+      <button className="btn btn-ui" onClick={onClick}>
+        Restart quiz
+      </button>
     </>
   );
 }
